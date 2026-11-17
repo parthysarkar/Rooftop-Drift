@@ -110,12 +110,15 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 - No engine, beeps or wind (Parth found them annoying). The only game sound is a tyre screech built from Parth's reference mp3, embedded and looped while a car is sliding. The rival's screech fades with distance.
 - **Music:** the Tokyo Drift song is not embedded, because hosting a commercial recording isn't allowed. Instead the player picks a song from their own device ("Choose a song from this device"). It is saved in the browser (IndexedDB) and loops during races. The file picker lists audio types explicitly so iPhone opens Files rather than Photos.
 
-### Multiplayer
-- Postponed until the visual work is done; Parth wants it last.
-- Agreed shape: the artifact's `room` capability, a room code, a WhatsApp invite link, about four players, and cars that pass through each other (no collisions over lag).
-- Open question: whether friends without a Claude account can join a shared link. Test this with one friend first.
-
----
+### Multiplayer (built; two players per room)
+- PeerJS (`unpkg.com/peerjs@1.5.4`), loaded only when a room is created or joined, so single player never pays for it.
+- The host's peer id is `rooftopdrift-room-<6 digits>`, so the code IS the address: no server of our own. Invite link is `?room=<code>`, shared by Copy, WhatsApp or the system Share sheet.
+- Each side drives its own car and sends it 20 times a second (`netTick`); the friend's car is drawn from those messages about 100 ms in the past, interpolated between the two either side of that moment (`netCar`). Ghost position error measured at roughly 1 m.
+- The host owns the track, the garage lights and the start; the guest's picks for those are locked (`#menu.guest`). Each player picks their own car and the two cannot be the same (`netCarClash`).
+- Finishing: each side tells the other its time, the host compares them and announces the result (`netLocalFinish`, `netDecide`, `netResult`); the guest falls back to its own judgement after 2.5 s if the host goes quiet.
+- A friend who closes the tab is noticed by a 7-second silence watchdog in `netTick`; the host keeps the room open on the same code, the guest can rejoin.
+- Off during a two-player race: the cinematic shots and the winner sequences (`cineActive` and `win.pending` both check `net.on`), because slow motion would pull the two games apart and the celebration would leave the other player waiting. Pause is off too.
+- Needs a normal web address. The claude.ai artifact blocks peer-to-peer connections, so there the game says so and stays single-player. Live at https://parthysarkar.github.io/rooftop-drift/.
 
 ## 3. What's done
 
@@ -147,6 +150,8 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 
 21. Headlight pool on the road is no longer a rigid plane fixed to the car (it cut into sloped and curving road, giving jagged edges and dark patches in corners). It is now a 14x6 grid laid on the road surface every frame (`beamFit`, using `locate` for road height, `winGround` on the winner sets) and it stops at the walls.
 
+22. Two-player rooms over PeerJS: Create room gives a 6-digit code, Join room or the invite link joins it, both cars race live, the host decides the result. Repo parthysarkar/rooftop-drift for GitHub Pages.
+
 ## 4. To do
 
 ### Check on Parth's iPhone (not yet confirmed)
@@ -164,6 +169,8 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 - Winner sequence: timing and feel of the five shots, smoke amount in the burnout, WINNER sign fitting the screen in portrait, result card not touching the sign.
 
 - Neon City winner sequence: the three shots in motion, top-down framing on a phone, WINNER screen readability.
+
+- Multiplayer on a real connection between two devices (only tested locally so far): feel of the friend's car, behaviour on a phone that gets backgrounded, two players on slow mobile data.
 
 ### Known issues
 - [ ] RX-7 tail lights are weak from straight behind, because the lamps sit on the corners.
