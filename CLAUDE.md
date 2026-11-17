@@ -118,7 +118,8 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 - Finishing: each side tells the other its time, the host compares them and announces the result (`netLocalFinish`, `netDecide`, `netResult`); the guest falls back to its own judgement after 2.5 s if the host goes quiet.
 - A friend who closes the tab is noticed by a 7-second silence watchdog in `netTick`; the host keeps the room open on the same code, the guest can rejoin.
 - Off during a two-player race: the cinematic shots and the winner sequences (`cineActive` and `win.pending` both check `net.on`), because slow motion would pull the two games apart and the celebration would leave the other player waiting. Pause is off too.
-- Needs a normal web address. The claude.ai artifact blocks peer-to-peer connections, so there the game says so and stays single-player. Live at https://parthysarkar.github.io/rooftop-drift/.
+- Needs a normal web address. The claude.ai artifact blocks peer-to-peer connections, so there the game says so and stays single-player.
+- **GitHub Pages:** everything is committed in the local clone at `/home/claude/rooftop-drift`, but the push is refused until the Claude GitHub App is given access to `parthysarkar/rooftop-drift` (it has the older repos, not this one). Once Parth grants it: `git -C /home/claude/rooftop-drift push -u origin main`, then switch Pages on for the `main` branch (`.nojekyll` is already in the repo) and the game is at https://parthysarkar.github.io/rooftop-drift/.
 
 ## 3. What's done
 
