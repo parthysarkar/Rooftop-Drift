@@ -96,6 +96,7 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 - Result card left untouched for 60 s (win or lose, any track) returns to the garage menu (`resIdle` in `step`). Any tap or key restarts the minute.
 
 ### Controls and rules
+- **No zoom on touch screens:** iOS zooms on a double tap even with `user-scalable=no`, which left the game stuck zoomed in when Parth tapped the Nitro button twice. The game surfaces (canvas, `.ctl`, `.btn`, `.hud`) are `touch-action:none`, the HUD and menu buttons are `touch-action:manipulation`, a `touchend` guard swallows a second tap within 400 ms anywhere except the menus and the Sound/Music/Pause buttons (so their clicks still fire), and `dblclick` and the Safari `gesture*` (pinch) events are blocked.
 - Gas is automatic. The left pad steers, hold Drift to slide, and Brake slows the car.
 - **Nitro (player-controlled):** drifting fills a nitro tank (3 seconds when full, 1 second at the start). W on the keyboard, or the Nitro button on touch screens, switches it on; pressing again switches it off; it stops by itself when empty. A meter under the speed shows the level. A hard wall hit costs half a second of nitro. The rival's boost stays automatic.
 - Keyboard: arrows or A/D to steer, W for nitro, Space to drift, S or Down to brake, Esc to pause or resume, R to restart.
@@ -108,6 +109,7 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 
 ### Sound
 - No engine, beeps or wind (Parth found them annoying). The only game sound is a tyre screech built from Parth's reference mp3, embedded and looped while a car is sliding. The rival's screech fades with distance.
+- **Nitro sound:** Parth's freesound "nitro activation" clip, trimmed to 2.36 s (the hit plus the whoosh, faded at the end), mono 24 kHz 56 kbps, embedded as base64 in `NITRO_SND`. It starts when the nitro lights up and is faded out in 0.16 s if the nitro is switched off or runs dry (`nitroSound`, watched once per frame in `draw`). It goes through the audio master, so the Sound button silences it. The rival's boost makes no sound.
 - **Two buttons during a race, down the top right corner:** "Sound on/off" switches the tyre screech (the audio master gain), "Music on/off" silences the song without unloading it, and "Pause" below them. Both choices are kept in `localStorage` (`rd_sfx`, `rd_mus`) so they survive a reload. The Music button only appears when a song is loaded, so it is never a dead control. All three are the same width (`min-width:108px`) with 10 px gaps, and the race timer moved to `top:134px` to stay clear of them.
 - **Music:** the Tokyo Drift song is not embedded, because hosting a commercial recording isn't allowed. Instead the player picks a song from their own device ("Choose a song from this device"). It is saved in the browser (IndexedDB) and loops during races. The file picker lists audio types explicitly so iPhone opens Files rather than Photos.
 
@@ -156,11 +158,14 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 
 23. Sound and Music are now separate buttons during a race (the old single Sound button also muted the music, and with no song loaded it seemed to do nothing). Both settings are remembered between sessions.
 
+24. Nitro sound added (Parth's clip) and double-tap zoom blocked on touch screens.
+
 ## 4. To do
 
 ### Check on Parth's iPhone (not yet confirmed)
 - [ ] Song picker opens Files and plays the mp3, and the Sound / Music buttons both respond to a tap
-- [ ] Tyre screech volume and feel
+- [ ] Tyre screech and nitro sound: volume balance and feel
+- [ ] Double tap during a race no longer zooms the page
 - [ ] Dotted speckle under the cars is gone
 - [ ] RX-7 windshield rim is fixed
 - [ ] Neon chevron size and brightness, and whether the track is readable in night mode
