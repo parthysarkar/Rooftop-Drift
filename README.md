@@ -3,7 +3,7 @@
 A browser drifting game. Race one rival up a parking garage, or race a friend.
 Built to run on iPhone Safari and on desktop Chrome and Safari.
 
-**Play:** https://parthysarkar.github.io/rooftop-drift/
+**Play:** https://parthysarkar.github.io/Rooftop-Drift/
 
 ## Playing with a friend
 
