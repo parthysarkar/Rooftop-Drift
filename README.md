@@ -37,3 +37,7 @@ From Sketchfab, simplified and restyled for this game:
 [vecarz](https://sketchfab.com/heynic) (Skyline R34, CC BY 4.0) and
 [autoNgraphic](https://sketchfab.com/autoNgraphic) (911 RWB, CC BY 4.0).
 The CC BY-NC-SA licence means this game stays non-commercial.
+
+## Credits and licence
+
+A free, non-commercial fan project, not affiliated with or endorsed by Universal Pictures. Car models by Ddiaz Design, vecarz and autoNgraphic under Creative Commons. See [CREDITS.md](CREDITS.md).

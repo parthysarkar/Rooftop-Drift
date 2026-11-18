@@ -55,6 +55,7 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 - **Loading on demand:** only the player's and rival's cars are loaded (`loadCar`, `useCars`). At most four models stay in memory (`trimCars`); older ones are freed. This keeps 12 cars as light as 4 were.
 - **Car list (Parth's request):** the menu shows two buttons, "You: ..." and "Rival: ...". Each opens a list; choosing a car closes it. The car the other side is using is greyed out. No long row of car buttons.
 - **Lights on every car:** small headlight points and tail-light glow placed per model (`head`, `tail` in `CARS`), exhaust flames at the real exhaust tips (`ex`), and no light patch on the bonnet (the headlight light source sits ahead of the front bumper).
+- **Fan-project notice:** the menu credits open with "A free fan project, not affiliated with or endorsed by Universal Pictures. Non-commercial, and it stays that way." The repo has `CREDITS.md` with the same notice, the per-model licence table, the sound credits and the trademark line, linked from `README.md`. Keep all of this in step if models or sounds change.
 - **Licences:** ten cars by Ddiaz Design (CC BY-NC-SA 4.0), the R34 by vecarz (CC BY 4.0), the 911 RWB by autoNgraphic (CC BY 4.0). Credits are in the menu, and the game must stay non-commercial.
 - **Not added:** `gporsche_turbo_2.glb` by SWIZ. Its licence is "Copyright to SWIZ" (all rights reserved, not Creative Commons), and it is 138 MB with about 3 million triangles. It needs the author's permission before it can go in.
 - RX-7: its front "swatch" decal is removed because of a broken texture mask.
@@ -159,6 +160,8 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 23. Sound and Music are now separate buttons during a race (the old single Sound button also muted the music, and with no song loaded it seemed to do nothing). Both settings are remembered between sessions.
 
 24. Nitro sound added (Parth's clip) and double-tap zoom blocked on touch screens.
+
+25. Fan-project and licence notice added to the menu credits, plus CREDITS.md in the repo (for Parth's LinkedIn post about the game).
 
 ## 4. To do
 
