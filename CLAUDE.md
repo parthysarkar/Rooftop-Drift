@@ -6,6 +6,20 @@
 
 Parth prefers short, to-the-point replies.
 
+## How changes are shipped (agreed 19 Nov 2026)
+
+The game is live for the public at https://parthysarkar.github.io/Rooftop-Drift/, so nothing reaches it untested.
+
+1. Fix one thing. Run the headless tests in `/home/claude/t` first.
+2. Publish to the **claude.ai artifact only** (it is private to Parth) and give him that link.
+3. He tests on his iPhone and his computer and answers yes or no.
+4. Only on a yes, push to GitHub. On a no, fix and republish the artifact. The live game never moves.
+5. If a bad change ever does reach the live site, revert that commit and push; Pages rebuilds in about a minute. Local snapshots are at `/home/claude/index.backup*.html`.
+
+**One change in flight at a time.** Do not start a second fix while the first is still waiting for Parth's verdict, and do not push an untested change. If he raises a new problem while one is open, say what is still open and ask whether to park the new one or switch. He decides; the default is to finish what is open first. The exception is something breaking the live game, which jumps the queue.
+
+**Check at the start of every session** whether the artifact, this repo and `/home/claude/drift/index.html` match, and say so in one line.
+
 ---
 
 ## 1. What the project is
