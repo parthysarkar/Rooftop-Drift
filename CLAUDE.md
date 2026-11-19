@@ -108,7 +108,9 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 - Plays when the player wins on Neon City, after the slow-motion finish shot (cut at 2 s; 1.15 s with cinematic shots off).
 - Own set (`winBuildCity()`, built on first use, parked at -1500/+1500): a proper square crossing where two 26 m roads meet, zebra crossings on all four sides plus both diagonals, towers lined up with the streets on the four corner blocks, and a round glass tower with a curved pink screen on the north-east corner. No crowd, no real brand names.
 - Route (`WCP`, `wcPath`): down the north road, long left sweep round the tower's corner, short hook, stop under the screen.
-- Three shots, phases in `WCT`: 1 high over the crossing, 2 low in front as the drift starts, 3 on the ground behind the car while it is still drifting, looking up past it at the lit WINNER screen (Parth's correction: the sign must be in the drifting shot, not shown after the car stops). Code: `winUpdateCity`, `winCamCity`. `win.kind` is `'roof'` or `'city'`.
+- **One unbroken run, and it must stay that way.** `wcRun(t)` gives the distance along the path and the speed at any moment: the car cruises in at `WCV0` (about 50 km/h) until `WCTB`, then the slide scrubs speed off evenly until it comes to rest under the screen at `WCTT`. The flick into the drift happens at s=56, before the first cut, so the car is already sideways when the camera changes. Each shot used to re-run its own stretch of the path, which threw the car 42 m backwards at the first cut and read as the car stopping and restarting (Parth, 19 Nov). Cameras read `win.s` and never compute their own position along the path. If the timing is ever retuned, check the sequence for backward jumps in `win.s`.
+- Three shots, phases in `WCT`: 1 high over the crossing, tracking the car in, 2 low ahead of the car as it slides past, 3 on the ground behind the car while it is still drifting, looking up past it at the lit WINNER screen (Parth's correction: the sign must be in the drifting shot, not shown after the car stops). Code: `winUpdateCity`, `winCamCity`. `win.kind` is `'roof'` or `'city'`.
+- **The WINNER screen** is one curved panel per letter, each a 288x576 canvas drawn as an LED board (`LP` = cell size) with the glyph fitted inside a margin so it cannot touch the panel edge. It was half that resolution with 16 px cells until 19 Nov, when Parth said it was too pixelated to read.
 - Result card after about 9.5 s; same skip as the rooftop sequence.
 - Result card left untouched for 60 s (win or lose, any track) returns to the garage menu (`resIdle` in `step`). Any tap or key restarts the minute.
 
@@ -181,6 +183,8 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 
 26. Headlight rework after Parth spotted a jagged cut while drifting: the road pool now fades at the edge of the road instead of being dragged onto it, and the two flat streak cards glued to the car were removed outright (body roll pushed them under the road, where the road clipped them into a straight line). Confirmed by Parth on 19 Nov: "more natural".
 
+27. Neon City winner sequence reworked: the car now makes one continuous drift from the approach to the sign (it used to jump backwards at every camera cut), and the WINNER screen is five times the resolution with finer LED cells and letters that fit their panels. Both confirmed by Parth on 19 Nov.
+
 ## 4. To do
 
 ### Check on Parth's iPhone (not yet confirmed)
@@ -198,7 +202,7 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 
 - Winner sequence: timing and feel of the five shots, smoke amount in the burnout, WINNER sign fitting the screen in portrait, result card not touching the sign.
 
-- Neon City winner sequence: the three shots in motion, top-down framing on a phone, WINNER screen readability.
+- Neon City winner sequence: the cruise speed of the approach (slower than before, because one continuous slide has to end under the sign) and whether the car reads big enough in the overhead shot.
 
 - Multiplayer on a real connection between two devices (only tested locally so far): feel of the friend's car, behaviour on a phone that gets backgrounded, two players on slow mobile data.
 

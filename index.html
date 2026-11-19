@@ -1195,15 +1195,19 @@ function winBuildCity(){
     c.globalAlpha=1;c.fillStyle='#39e6ff';c.fillRect(0,h*.8,w,7);},true);glass.repeat.set(9,1);
   add(new T.CylinderGeometry(R,R,TH,56,1,true),new T.MeshBasicMaterial({map:glass}),bx,TH/2-.5,bz);
   const cap=add(new T.CircleGeometry(R,40),bldTop,bx,TH-.5,bz);cap.rotation.x=-Math.PI/2;
-  const th0=Math.atan2(12-bx,6-bz),DT=.25,SY=17,SH=8.6,fam='italic 900 190px "HelveticaNeue-CondensedBlack",Impact,"Arial Black","Helvetica Neue",Arial,sans-serif',tex={};
-  'WINER'.split('').forEach(ch=>{tex[ch]=ctex(128,256,(c,w,h)=>{const gr=c.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#ff4fc4');gr.addColorStop(.5,'#ff2a9a');gr.addColorStop(1,'#c81e8c');c.fillStyle=gr;c.fillRect(0,0,w,h);
-    for(let y=0;y<h;y+=16)for(let x=0;x<w;x+=16){c.fillStyle='rgba(255,220,245,'+rnd(0,.22)+')';c.fillRect(x,y,16,16);}
-    c.font=fam;c.textAlign='center';c.textBaseline='middle';const mw=c.measureText(ch).width;c.save();c.translate(w/2,h/2+8);c.scale(Math.min(1,106/mw),1);
-    c.shadowColor='#ffffff';c.shadowBlur=14;c.fillStyle='#fff6fb';c.fillText(ch,0,0);c.restore();
-    c.fillStyle='rgba(30,0,40,.5)';for(let y=0;y<h;y+=16)c.fillRect(0,y,w,1.5);for(let x=0;x<w;x+=16)c.fillRect(x,0,1.5,h);});});
+  const th0=Math.atan2(12-bx,6-bz),DT=.25,SY=17,SH=8.6,LW=288,LH=576,LP=20,fam='italic 900 430px "HelveticaNeue-CondensedBlack",Impact,"Arial Black","Helvetica Neue",Arial,sans-serif',tex={};
+  // Each letter is its own panel on the curved screen. The canvas is 288x576 with LP-pixel cells, so the screen reads as
+  // an LED board without the letters turning to mush, and the glyph is fitted inside a margin so it can't touch the edges.
+  'WINER'.split('').forEach(ch=>{tex[ch]=ctex(LW,LH,(c,w,h)=>{const gr=c.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#ff4fc4');gr.addColorStop(.5,'#ff2a9a');gr.addColorStop(1,'#c81e8c');c.fillStyle=gr;c.fillRect(0,0,w,h);
+    for(let y=0;y<h;y+=LP)for(let x=0;x<w;x+=LP){c.fillStyle='rgba(255,220,245,'+rnd(0,.2)+')';c.fillRect(x,y,LP,LP);}
+    c.font=fam;c.textAlign='center';c.textBaseline='middle';const mw=c.measureText(ch).width,m=c.measureText('H');
+    const gh=(m.actualBoundingBoxAscent||310)+(m.actualBoundingBoxDescent||0);
+    c.save();c.translate(w/2,h/2+10);c.scale(Math.min(1,w*.74/mw),Math.min(1,h*.62/gh));
+    c.shadowColor='#ffffff';c.shadowBlur=26;c.fillStyle='#fff6fb';c.fillText(ch,0,0);c.restore();
+    c.fillStyle='rgba(30,0,40,.45)';for(let y=0;y<h;y+=LP)c.fillRect(0,y,w,2);for(let x=0;x<w;x+=LP)c.fillRect(x,0,2,h);});});
   win.cLet=[];'WINNER'.split('').forEach((ch,j)=>{const m=new T.MeshBasicMaterial({map:tex[ch],fog:false});
-    add(new T.CylinderGeometry(R+.3,R+.3,SH,6,1,true,th0+(j-3)*DT,DT),m,bx,SY,bz);win.cLet.push({m,on:0});});
-  add(new T.CylinderGeometry(R+.2,R+.2,SH+.8,24,1,true,th0-3.1*DT,6.2*DT),new T.MeshBasicMaterial({color:0x05060c}),bx,SY,bz);
+    add(new T.CylinderGeometry(R+.3,R+.3,SH,12,1,true,th0+(j-3)*DT,DT),m,bx,SY,bz);win.cLet.push({m,on:0});});
+  add(new T.CylinderGeometry(R+.2,R+.2,SH+1,32,1,true,th0-3.3*DT,6.6*DT),new T.MeshBasicMaterial({color:0x05060c}),bx,SY,bz);
   const rimM=new T.SpriteMaterial({map:softTex,color:0xfff4e0,transparent:true,opacity:.8,blending:T.AdditiveBlending,depthWrite:false,fog:false});
   for(let k=-5;k<=5;k++){const a=th0+k*.26,sp=new T.Sprite(rimM);sp.position.set(bx+Math.sin(a)*(R+.8),TH+.3,bz+Math.cos(a)*(R+.8));sp.scale.set(2.6,2.6,1);g.add(sp);}
   win.cHalo=new T.SpriteMaterial({map:softTex,color:0xff3ca8,transparent:true,opacity:0,blending:T.AdditiveBlending,depthWrite:false,fog:false});
@@ -1213,16 +1217,21 @@ function winBuildCity(){
   win.cScr=[WCX+bx+Math.sin(th0)*R,SY,WCZ+bz+Math.cos(th0)*R];
 }
 const WSHC=[{fov:44,wide:1,dof:0},{fov:32,dof:1.1,foc:()=>fHead(carP,P,1)},{fov:50,dof:0}];
+// The car makes ONE run: it cruises in, starts the slide, and scrubs speed until it rests under the screen.
+// Each shot used to re-run its own stretch of the path, which jumped the car backwards at every cut and read as a stop.
+const WCS0=34,WCTB=2.6,WCTT=8.3,WCV0=(WCS-WCS0)/(WCTB+(WCTT-WCTB)/2);
+function wcRun(t){if(t<=0)return{s:WCS0,v:WCV0};
+  if(t<WCTB)return{s:WCS0+WCV0*t,v:WCV0};                                      // cruising in
+  const w=clamp((t-WCTB)/(WCTT-WCTB),0,1),q=1-w;                               // then the slide scrubs speed off evenly, resting under the screen
+  return{s:WCS0+WCV0*WCTB+WCV0*(WCTT-WCTB)/2*(1-q*q),v:WCV0*q};}
 function winUpdateCity(dt){
   win.t+=dt;const t=win.t;let k=0;while(k<3&&t>=WCT[k+1])k++;const shot=Math.min(k,2);
   if(shot!==win.shot){win.shot=shot;firstFrame=true;P.trL.ok=P.trR.ok=false;}
   const u=clamp((t-WCT[k])/(WCT[k+1]-WCT[k]),0,1);win.u=u;win.ph=k;win.sh=WSHC[shot];win.burn=false;win.noSkid=false;win.smk=k===0?1:.5;win.brake=k>=3;
-  const dr0=s=>.65*clamp((s-63)/9,0,1);
-  if(k===0){const s=lerp(34,100,u);wcPath(s);const dr=dr0(s);winCar(wp.x,0,wp.z,wp.h,wp.h-dr,66/2.7,dr*1.2,dr*1.5,0);win.screech=.6*clamp((s-63)/5,0,1);}
-  else if(k===1){const s=lerp(58,80,u);wcPath(s);const dr=dr0(s);winCar(wp.x,0,wp.z,wp.h,wp.h-dr,22/2.1,dr*1.2,dr*1.5,0);win.screech=.6*clamp((s-63)/4,0,1);}
-  else if(k===2){const e=1-Math.pow(1-u,2.2),s=84+(WCS-84)*e,sp=(WCS-84)*2.2*Math.pow(1-u,1.2)/3.5;wcPath(s);                 // the long slide round the corner, under the screen
-    winCar(wp.x,0,wp.z,wp.h,wp.h-.65,sp,.8,1,0);win.burn=sp>2.5;win.screech=.75*clamp(sp/7,0,1);}
-  else{wcPath(WCS);winCar(wp.x,0,wp.z,wp.h,wp.h-.65,0,0,.5,0);P.dr=false;win.screech=0;}
+  const r=wcRun(t),s=Math.min(r.s,WCS),sp=t>=WCTT?0:r.v,dr=.72*clamp((s-56)/12,0,1);
+  win.s=s;win.v=sp;win.smk=k===2?.6:.95;win.brake=sp<6;
+  wcPath(s);winCar(wp.x,0,wp.z,wp.h,wp.h-dr,sp,dr*1.15,dr*1.5,0);
+  win.burn=sp>1.2&&sp<8;win.screech=.75*clamp(sp/9,0,1)*clamp(dr/.35,0,1);
   let lit=0;win.cLet.forEach((L,j)=>{const tj=WCT[2]+.1+j*.11;L.on=t<tj?0:t<tj+.28?(Math.sin(t*95+j*2)>0?1:.15):.93+.07*Math.sin(t*31+j);     // the screen comes on as the last shot starts
     const v=.07+.93*L.on;L.m.color.setRGB(v,v,v);lit+=L.on/6;});
   win.cHalo.opacity=.3*lit;win.cGlow.opacity=.34*lit;
@@ -1230,8 +1239,9 @@ function winUpdateCity(dt){
 }
 function winCamCity(){
   const k=win.ph,u=win.u,t=tNow,sh=win.sh;cUp.set(0,1,0);
-  if(k===0){cPos.set(WCX,80-u*8,WCZ+33-u*3);cLook.set(WCX,0,WCZ-5);}                                                   // 1: high over the square
-  else if(k===1){const cx=P.x,cy=P.y,cz=P.z;wcPath(lerp(58,80,u)+9.5-u*2.5);const rx=-Math.sin(wp.h),rz=Math.cos(wp.h);       // 2: low in front as the drift starts
+  if(k===0){const lx=P.x-WCX,lz=P.z-WCZ;                                                                               // 1: high over the square, tracking the car in
+    cPos.set(WCX+lx*.35,62-u*8,WCZ+lz*.35+26);cLook.set(WCX+lx*.8,0,WCZ+lz*.8+2);}
+  else if(k===1){const cx=P.x,cy=P.y,cz=P.z;wcPath(win.s+9.5);const rx=-Math.sin(wp.h),rz=Math.cos(wp.h);                // 2: low ahead of the car, held 9.5 m in front of it as it slides past
     cPos.set(wp.x+rx*2.1,.55,wp.z+rz*2.1);cLook.set(cx,cy+.6,cz);}
   else{const S=win.cScr;let dx=P.x-S[0],dz=P.z-S[2];const dl=Math.hypot(dx,dz);dx/=dl;dz/=dl;                                 // 3: on the ground behind the sliding car, looking up past it at the screen
     cPos.set(P.x+dx*6.4-dz*.5,.36,P.z+dz*6.4+dx*.5);cLook.set(P.x-dx*8,3.7,P.z-dz*8);
