@@ -602,14 +602,17 @@ function makeCar(o){
   const flat=(w,l,mat,x,y)=>{const m=add(new T.PlaneGeometry(l,w),mat,x,y,0,g);m.rotation.x=-Math.PI/2;return m;};
   flat(3.0,5.6,new T.MeshBasicMaterial({map:blobTex,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1}),0,.014);
   // headlight pool on the road: a grid laid on the road surface every frame (beamFit), so it follows slopes and bends and stops at the walls
-  const BA=14,BB=6,bgeo=new T.BufferGeometry(),bpos=new Float32Array((BA+1)*(BB+1)*3),buv=[],bix=[];
+  const BA=14,BB=6,bgeo=new T.BufferGeometry(),bpos=new Float32Array((BA+1)*(BB+1)*3),bfade=new Float32Array((BA+1)*(BB+1)).fill(1),buv=[],bix=[];
   for(let i=0;i<=BA;i++)for(let j=0;j<=BB;j++)buv.push(i/BA,j/BB);
   for(let i=0;i<BA;i++)for(let j=0;j<BB;j++){const a=i*(BB+1)+j,b=a+BB+1;bix.push(a,b,a+1,a+1,b,b+1);}
-  bgeo.setAttribute('position',new T.BufferAttribute(bpos,3));bgeo.setAttribute('uv',new T.Float32BufferAttribute(buv,2));bgeo.setIndex(bix);
-  const beam=new T.Mesh(bgeo,new T.MeshBasicMaterial({map:beamTex,color:0xffe9c0,transparent:true,opacity:.4,blending:T.AdditiveBlending,depthWrite:false,fog:false,side:T.DoubleSide,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1}));
-  beam.frustumCulled=false;scene.add(beam);const beamI={mesh:beam,pos:bpos,BA,BB,x0:2.3};
+  bgeo.setAttribute('position',new T.BufferAttribute(bpos,3));bgeo.setAttribute('aFade',new T.BufferAttribute(bfade,1));bgeo.setAttribute('uv',new T.Float32BufferAttribute(buv,2));bgeo.setIndex(bix);
+  const beamMat=new T.MeshBasicMaterial({map:beamTex,color:0xffe9c0,transparent:true,opacity:.4,blending:T.AdditiveBlending,depthWrite:false,fog:false,side:T.DoubleSide,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1});
+  beamMat.customProgramCacheKey=()=>'beamfade';
+  beamMat.onBeforeCompile=sh=>{sh.vertexShader='attribute float aFade;\nvarying float vFade;\n'+sh.vertexShader.replace('void main() {','void main() {\n\tvFade = aFade;');
+    sh.fragmentShader='varying float vFade;\n'+sh.fragmentShader.replace('#include <dithering_fragment>','#include <dithering_fragment>\n\tgl_FragColor.rgb *= vFade;\n\tgl_FragColor.a *= vFade;');};
+  const beam=new T.Mesh(bgeo,beamMat);
+  beam.frustumCulled=false;scene.add(beam);const beamI={mesh:beam,pos:bpos,BA,BB,x0:2.3,fade:bfade};
   const streakM=new T.MeshBasicMaterial({map:softTex,color:0xffe2ae,transparent:true,opacity:.5,blending:T.AdditiveBlending,depthWrite:false,fog:false,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1});
-  const streaks=[flat(.8,3.4,streakM,0,.022),flat(.8,3.4,streakM,0,.022)];
   const headS=new T.SpriteMaterial({map:softTex,color:0xfffbea,transparent:true,opacity:1,depthWrite:false,fog:false});
   const haloS=new T.SpriteMaterial({map:softTex,color:0xffe9c0,transparent:true,opacity:.22,blending:T.AdditiveBlending,depthWrite:false,fog:false});
   const tailS=new T.SpriteMaterial({map:softTex,color:0xff2030,transparent:true,opacity:.4,blending:T.AdditiveBlending,depthWrite:false,fog:false});
@@ -619,7 +622,7 @@ function makeCar(o){
   const spot=new T.SpotLight(0xfff0d2,.7,30,.5,.7,1.1);g.add(spot);g.add(spot.target);
   lampH.forEach(L=>L.forEach(x=>x.renderOrder=3));lampT.forEach(L=>L.forEach(x=>x.renderOrder=3));
   const setLamps=(hd,tl)=>{lampH.forEach((L,k)=>{const sg=k?1:-1;L[0].position.set(hd[0]+.06,hd[1],hd[2]*sg);L[1].position.set(hd[0]+.08,hd[1]-.01,(hd[2]-.15)*sg);L[2].position.set(hd[0]+.08,hd[1],(hd[2]-.06)*sg);
-      streaks[k].position.set(hd[0]+2.0,.022,hd[2]*sg);});
+      });
     lampT.forEach((L,k)=>{L[0].position.set(tl[0]-.07,tl[1],tl[2]*(k?1:-1));L[1].position.set(tl[0]-.06,tl[1],tl[2]*(k?1:-1));});
     beamI.x0=hd[0]+.1;spot.position.set(Math.max(2.65,hd[0]+.5),.55,0);spot.target.position.set(15,.1,0);};
   setLamps([2.2,.62,.6],[-2.22,.72,.58]);
@@ -1429,13 +1432,17 @@ function updAI(dt){
 // road height under a point of the winner sets (the spiral ramp needs it; everything else there is flat)
 function winGround(x,z){if(win.kind!=='roof'||win.shot>3)return P.y;const lx=x-WX,lz=-z,a=Math.atan2(lz,lx),st=Math.PI*2/WTH,q0=(Math.PI/2-a)/WTH;
   return WH*clamp(q0+Math.round((P.y/WH-q0)/st)*st,0,1);}
-function beamFit(c,S,idx){const b=c.beam,p=b.pos;b.mesh.visible=c.g.visible;if(!c.g.visible)return;
-  const fx=Math.cos(S.h),fz=Math.sin(S.h),w=state==='win',lim=HALF_W-.06;let q=0;
-  for(let i=0;i<=b.BA;i++)for(let j=0;j<=b.BB;j++){const a=b.x0+15*i/b.BA,d=(j/b.BB-.5)*9;let x=S.x+fx*a-fz*d,z=S.z+fz*a+fx*d,y;
-    if(w){if(win.kind==='roof'&&win.shot<4){const r=Math.hypot(x-WX,z);if(win.shot>0||x>WX){const k=clamp(r,5.56,12.44)/r;x=WX+(x-WX)*k;z*=k;}}y=winGround(x,z);}
-    else{locate(x,z,idx,14,36);if(Math.abs(loc.d)>lim){const e=loc.d-Math.sign(loc.d)*lim;x+=Math.sin(loc.h)*e;z-=Math.cos(loc.h)*e;}y=loc.y;}
-    p[q++]=x;p[q++]=y+.03;p[q++]=z;}
-  b.mesh.geometry.attributes.position.needsUpdate=true;}
+const BEAM_FADE=1.6,BEAM_OVER=.9;      // the pool stays at full strength to the road edge, then dies BEAM_FADE metres past it (about where the wall or barrier stands)
+function beamFit(c,S,idx){const b=c.beam,p=b.pos,f=b.fade;b.mesh.visible=c.g.visible;if(!c.g.visible)return;
+  // The grid keeps its shape and only follows the road's height. Where it runs past the edge of the road it is faded out
+  // per vertex (BEAM_FADE metres of falloff) instead of being dragged back, which used to squash the texture into a hard line.
+  const fx=Math.cos(S.h),fz=Math.sin(S.h),w=state==='win',lim=HALF_W+BEAM_OVER;let q=0,k=0;
+  for(let i=0;i<=b.BA;i++)for(let j=0;j<=b.BB;j++){const a=b.x0+15*i/b.BA,d=(j/b.BB-.5)*9;const x=S.x+fx*a-fz*d,z=S.z+fz*a+fx*d;let y,fd=1;
+    if(w){y=winGround(x,z);
+      if(win.kind==='roof'&&win.shot<4&&(win.shot>0||x>WX)){const r=Math.hypot(x-WX,z);fd=clamp((r-5.56+BEAM_OVER)/BEAM_FADE,0,1)*clamp((12.44+BEAM_OVER-r)/BEAM_FADE,0,1);}}
+    else{locate(x,z,idx,14,36);y=loc.y;fd=clamp((lim-Math.abs(loc.d))/BEAM_FADE,0,1);}
+    p[q++]=x;p[q++]=y+.03;p[q++]=z;f[k++]=fd*fd*(3-2*fd);}
+  b.mesh.geometry.attributes.position.needsUpdate=true;b.mesh.geometry.attributes.aFade.needsUpdate=true;}
 function carFx(dt){
   // smoke and skid marks come from the two rear tyres only, and only while sliding
   const puff=(x,y,z,fx,fz,nx,nz,vx,vz,amt)=>{let c=amt;while(c>Math.random()){c--;const r=rnd(.5,2.6),q=rnd(-.9,.9);

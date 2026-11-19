@@ -59,7 +59,9 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 - Speed feel comes from motion blur (frame accumulation plus radial blur), camera shake and the field of view widening with speed.
 - **Night run (dark mode) is the default:** the garage lights are off, and the scene is lit by headlights, tail lights, the city glow and the neon arrows. A "Garage lights: On" option keeps the original lit look.
 - **Neon arrows:** blue outlined chevrons on the outside wall of every turn, with the light running in the direction of travel. They start before the big hairpins as a warning. Parth supplied a blue neon chevron reference.
-- **Headlights:** small bright points inside each lamp housing, with the light on the road faked using floor streaks and a soft beam. No big glow around the lamp (Parth said it broke the illusion). Tail lights are a small red core with a soft glow, brighter when braking or drifting.
+- **Headlights:** three pieces, after the November 19 rework. (1) A real `SpotLight` on the nose that lights the road, walls and the other car. (2) Small bright sprites inside each lamp housing, plus a small halo. No big glow around the lamp (Parth said it broke the illusion). (3) The pool on the road: a 14x6 grid laid onto the road surface every frame (`beamFit`), which follows slopes and corners and fades out over `BEAM_FADE` metres as it reaches the edge of the road, dying about where the wall or barrier stands.
+- **Do not go back to flat cards for light on the road.** There used to be two "streak" quads glued to the car body. Body roll in a drift reaches 5.2 degrees, which drops a 0.8 m wide card's outer edge 3.6 cm while it only floats 2.2 cm above the ground, so the road clipped it along a straight line. That was the jagged cut Parth reported, and the cards were removed on 19 Nov 2026. The pool had the same symptom from a different cause: its vertices used to be dragged back onto the road at the edge while their UVs stayed put, squashing the gradient into a hard line. The fade replaced that. `streakM` is still defined because the garage-lights code reads it; nothing draws with it.
+- Tail lights are a small red core with a soft glow, brighter when braking or drifting.
 - Smoke comes only from the two rear tyres, and only while sliding. It is soft and grows as it trails.
 - No orange cones.
 - **Boost flames:** yellow-orange (not blue), coming from each model's real exhaust tip: Evo IX one on the right, RX-7 one on the right, R34 one on the left, 350Z two. The boost screen tint is warm to match.
@@ -176,6 +178,8 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 24. Nitro sound added (Parth's clip) and double-tap zoom blocked on touch screens.
 
 25. Fan-project and licence notice added to the menu credits, plus CREDITS.md in the repo (for Parth's LinkedIn post about the game).
+
+26. Headlight rework after Parth spotted a jagged cut while drifting: the road pool now fades at the edge of the road instead of being dragged onto it, and the two flat streak cards glued to the car were removed outright (body roll pushed them under the road, where the road clipped them into a straight line). Confirmed by Parth on 19 Nov: "more natural".
 
 ## 4. To do
 
