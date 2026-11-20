@@ -1469,7 +1469,7 @@ function carFx(dt){
   smoke.update(dt,.3,1.5);sparks.update(dt,-12,.6);
   // meshes
   const slope=state==='win'?win.slope:SLOPE;
-  P.roll+=(clamp(-P.slip*.14-P.st*P.sp*.0016,-.09,.09)-P.roll)*Math.min(1,dt*6);
+  P.roll+=((state==='win'?0:clamp(-P.slip*.14-P.st*P.sp*.0016,-.09,.09))-P.roll)*Math.min(1,dt*6);      // the winner sets are shot close up, and a lean either buries the outer tyre in the road or pushes it into the arch
   carP.g.position.set(P.x,P.y,P.z);carP.g.rotation.set(P.roll,-P.h,slope*Math.cos(angd(P.h,P.th||P.h))+(P.boost>0?.018:0));
   carA.g.position.set(A.x,A.y,A.z);carA.g.rotation.set(-A.ang*.1,-A.h,slope);
   for(const w of carP.wheels){w.sp.rotation.z-=((P.dr&&!w.front)?Math.max(P.sp,30):P.sp)/.34*dt;if(w.front)w.piv.rotation.y=-P.st*.5;}

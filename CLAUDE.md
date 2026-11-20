@@ -102,6 +102,7 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 - It runs on a separate set (`winBuild()`, built on first use, parked 1500 m from the track): garage level, a 2.5-turn spiral ramp with globe lamps, a bridge, a rooftop with a neon WINNER sign. No crowd (Parth's choice).
 - The car is scripted, not driven (`winUpdate`, `winPath`, `winCar`). Shots and times are in `WT`: 1 garage pan, 2 low behind at the ramp entry, 3 high close front on the ramp, 4 straight down on the tower, 5 rooftop (slide in, burnout, one full donut, WINNER letters light one by one). Cameras are in `winCam`.
 - The result card appears after the donut (about 16 s); the camera then moves the sign and car clear of the card. Tap or Space skips to the end.
+- **The car does not lean in either winner sequence** (`state==='win'` forces the roll target to 0). The winner shots are close-ups, and a real donut lean has nowhere to go: the body rolls about its centreline at ground level, so 5.2 degrees puts the outer tyre 8 cm into the road. Lifting each wheel back up instead (`plantWheels`, tried on 19 Nov) pushed the tyre into the arch on the widebody cars. Flat is what reads naturally; do not reintroduce the lean. Normal racing still rolls as before.
 - State is `'win'`; `winEnd()` restores the track, lights and rival and is called from startRace, setTrack and the Garage button.
 
 ### Winner sequence, Neon City (from Parth's two Shibuya crossing photos with the route marked in green)
@@ -184,6 +185,8 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 26. Headlight rework after Parth spotted a jagged cut while drifting: the road pool now fades at the edge of the road instead of being dragged onto it, and the two flat streak cards glued to the car were removed outright (body roll pushed them under the road, where the road clipped them into a straight line). Confirmed by Parth on 19 Nov: "more natural".
 
 27. Neon City winner sequence reworked: the car now makes one continuous drift from the approach to the sign (it used to jump backwards at every camera cut), and the WINNER screen is five times the resolution with finer LED cells and letters that fit their panels. Both confirmed by Parth on 19 Nov.
+
+28. Wheels no longer sink into the road during the rooftop burnout and donut: the car stays flat through both winner sequences instead of leaning. Confirmed by Parth on 19 Nov.
 
 ## 4. To do
 
