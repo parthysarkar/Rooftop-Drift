@@ -160,7 +160,7 @@ body.cine.pre #skip{opacity:.7}
       <button class="opt" type="button" data-v="off" aria-pressed="true">Off, night run</button>
       <button class="opt" type="button" data-v="on" aria-pressed="false">On</button>
     </div>
-    <div class="row" id="cineRow"><span class="lab">Cinematic shots (Neon City track)</span>
+    <div class="row" id="cineRow"><span class="lab">Cinematic shots</span>
       <button class="opt" type="button" data-v="on" aria-pressed="true">On</button>
       <button class="opt" type="button" data-v="off" aria-pressed="false">Off</button>
     </div>
@@ -788,7 +788,7 @@ TRACKS.forEach((t,k)=>{const b=document.createElement('button');b.type='button';
   b.setAttribute('aria-pressed',String(k===0));b.addEventListener('click',()=>{setTrack(k);netCfg();});$('trackRow').appendChild(b);});
 function hud(show){$('pauseBtn').hidden=!show||net.on;$('mute').hidden=!show;$('musBtn').hidden=!show||!music;['pos','floor','time','speed'].forEach(id=>$(id).hidden=!show);$('steer').style.visibility=$('right').style.visibility=$('bNitro').style.visibility=show?'visible':'hidden';}
 hud(false);
-function startRace(){winEnd();netRaceReset();initAudio();if(music)music.play().catch(()=>{});applyCars();resetCars();cineReset();cine.cyc=cine.alt=0;cine.cool=0;cine.sbs=0;state='count';tCount=3.2+(cineActive()?4.4:0);lastCount=4;tRace=0;$('menu').hidden=true;$('result').hidden=true;hud(true);
+function startRace(){winEnd();netRaceReset();initAudio();if(music)music.play().catch(()=>{});applyCars();resetCars();cineReset();cine.cyc=cine.alt=0;cine.cool=0;cine.sbs=0;state='count';tCount=3.2+(cineOpen()?4.4:0);lastCount=4;tRace=0;$('menu').hidden=true;$('result').hidden=true;hud(true);
   $('bestTxt').textContent=best?'Best '+fmt(best):'';}
 function finish(){state='done';tDone=0;won=!A.fin;if(won&&(!best||tRace<best)){best=tRace;try{localStorage.setItem(bestKey(),String(best));}catch(e){}}
   big(won?'WIN':'2ND');beep(won?880:220,.5,.14,'sawtooth');if(cineActive())cineStart('finishSide');win.pending=won&&!net.on;}
@@ -947,21 +947,27 @@ const SHOTS={
   finishSide:{dur:1.7,ts:.22,fov:32,dof:1.1,foc:()=>fCar(P,1.9),init(){trackPoint(Math.min(N-2,FINISH+4),P.d>0?-5.4:5.4);cine.hold.set(tp.x,tp.y+.4,tp.z);},cam(){cPos.copy(cine.hold);cLook.set(P.x,P.y+.6,P.z);}},
   finishOrbit:{dur:2.6,ts:.5,fov:38,dof:1,foc:()=>fCar(P,1.9),cam(u){const a=P.h+2.4-u*1.5;cPos.set(P.x+Math.cos(a)*6.5,P.y+1.2,P.z+Math.sin(a)*6.5);keepOnRoad(cPos);cLook.set(P.x,P.y+.6,P.z);}}
 };
-const cineActive=()=>cineOn&&THEME==='city'&&!net.on;
+const cineActive=()=>cineOn&&THEME==='city'&&!net.on;      // the in-race shots and the finish shot: Neon City only
+const cineOpen=()=>cineOn&&!net.on;                        // the opening sequence: every track (Parth, 23 Nov)
 function cineStart(name){const sh=SHOTS[name];cine.shot=sh;cine.name=name;cine.t=0;cine.w=1;cine.out=0;if(sh.init)sh.init();firstFrame=true;document.body.classList.add('cine');}
 function cineReset(){cine.shot=null;cine.name='';cine.w=0;cine.out=0;cine.launch=false;cine.assist=0;timeScale=1;document.body.classList.remove('cine','pre');firstFrame=true;}
 function cineBlendOut(cool){if(cine.shot&&cine.out<=0){cine.out=.5;cine.cool=cool;}}
 function cineUpdate(dt){
   if(state==='win'){timeScale=1;return;}
-  if(!cineActive()||state==='menu'){if(cine.shot||timeScale!==1)cineReset();return;}
-  const i=clamp(P.idx,0,N-1);cine.k=pk[i]<0?-1:1;
+  if(!cineOpen()||state==='menu'){if(cine.shot||timeScale!==1)cineReset();return;}
+  const i=clamp(P.idx,0,N-1);cine.k=pk[i]<0?-1:1;const gar=THEME!=='city';
   let target=1;
   if(state==='count'){
-    const t=tCount,want=t>6.5?'front34':t>5.4?'wheel':t>4.3?'rivalRear':t>3.2?'rivalFront':t>2.13?'top':t>1.07?'frontWide':'rearLow';
+    const t=tCount;
+    if(gar&&t<=1.07){   // garages: on the 1 the shot glides back into the usual start camera, which then eases in behind the car after GO (Parth, 23 Nov)
+      if(cine.shot){if(cine.out<=0)cine.out=1;cine.out-=dt;cine.w=clamp(cine.out,0,1);if(cine.out<=0){cine.shot=null;cine.name='';cine.w=0;document.body.classList.remove('cine');}}
+      cine.launch=false;document.body.classList.remove('pre');timeScale=1;return;}
+    const want=t>6.5?'front34':t>5.4?'wheel':t>4.3?'rivalRear':t>3.2?'rivalFront':gar?(t>2.13?'frontWide':'rearLow'):t>2.13?'top':t>1.07?'frontWide':'rearLow';   // garages: one shot per number, front wide on 3, low behind on 2
     if(cine.name!==want||!cine.shot)cineStart(want);cine.t+=dt;cine.seqT=0;cine.launch=true;
     document.body.classList.toggle('pre',t>3.3);timeScale=1;return;}
   document.body.classList.remove('pre');
-  if(state==='race'&&cine.launch){            // GO: stay behind as they pull away, then a low tracking shot, then back to the game camera
+  if(state==='race'&&cine.launch&&gar){cine.launch=false;cineBlendOut(4);}   // garages: no nitro view, straight back to the usual start camera easing in behind the car
+  else if(state==='race'&&cine.launch){            // GO: stay behind as they pull away, then a low tracking shot, then back to the game camera
     cine.seqT+=dt;cine.t+=dt;introK=0;
     if(cine.seqT>=1.25&&cine.seqT<2.6&&cine.name!=='launchNitro')cineStart('launchNitro');
     if(cine.seqT>=2.6){cine.launch=false;cineBlendOut(4);}
@@ -970,7 +976,7 @@ function cineUpdate(dt){
     if(cine.out>0){cine.out-=dt;cine.w=clamp(cine.out/.5,0,1);if(cine.out<=0){cine.shot=null;cine.name='';cine.w=0;document.body.classList.remove('cine');}}
     else if(state==='done'){if(cine.name==='finishSide'&&cine.t>=cine.shot.dur)cineStart('finishOrbit');}
     else if(cine.t>=cine.shot.dur)cineBlendOut(3.2);
-  }else if(state==='race'){
+  }else if(state==='race'&&!gar){
     cine.cool-=dt;cine.sbs=(cine.sbs||0)-dt;
     let clear=true;for(let j=0;j<=90;j+=10)if(pt[Math.min(N-1,i+j)]>=90){clear=false;break;}   // no big corner coming, so a side-by-side shot won't use up the next drift shot
     const hair=pt[i]>=90,sliding=P.dr&&hair&&Math.abs(P.slip)>.28&&P.sp>15;cine.driftT=sliding?cine.driftT+dt:0;
@@ -1527,7 +1533,7 @@ let lastSpd=-1,lastPos='',lastFloor='',slow=0,frames=0,resIdle=0;
 function step(dt){
   if(!$('result').hidden){resIdle+=dt;if(resIdle>60){resIdle=0;$('toMenu').click();return;}}      // nobody touched the result card for a minute: back to the garage
   tNow+=dt;cineUpdate(dt);const gdt=dt*timeScale;                 // dt is real time, gdt is game time (slowed during cinematic shots)
-  if(state==='count'){if(cineActive()&&tCount>3.3&&(inp.drift||inp.brake))tCount=3.2;      // skip the opening shots
+  if(state==='count'){if(cineOpen()&&tCount>3.3&&(inp.drift||inp.brake))tCount=3.2;      // skip the opening shots
     tCount-=dt;const c=Math.ceil(tCount);if(c!==lastCount&&c>0&&c<=3){lastCount=c;big(String(c));beep(440,.14,.1);}
     if(tCount<=0){state='race';big('GO');beep(880,.4,.12);P.launch=1.5;}}
   if(state==='race')tRace+=gdt;
@@ -1583,7 +1589,7 @@ function frame(now){requestAnimationFrame(frame);const raw=(now-prev)/1000;prev=
   frames++;if(raw>.03)slow++;if(frames>=120){if(slow>70&&DPR>1){DPR=Math.max(1,DPR-.5);resize();}frames=0;slow=0;}
 }
 resetCars();
-window.__g={get AU(){return AU;},get music(){return music;},net,netCreate,netJoin,get resIdle(){return resIdle;},set resIdle(v){resIdle=v;},win,winStart,winSkip,finish,step,draw,P,A,inp,startRace,get state(){return state;},get t(){return tRace;},get now(){return tNow;},toggleNitro,setCars(a,b){pick=CARS.findIndex(c=>c.k===a);if(b)rivalPick=CARS.findIndex(c=>c.k===b);else if(rivalPick===pick)rivalPick=(pick+1)%CARS.length;useCars();},get models(){return Object.keys(models);},scene,carP,carA,cine,SHOTS,cineStart,get ts(){return timeScale;},get tCount(){return tCount;},get N(){return N;},get NL(){return NL;},get FINISH(){return FINISH;},get ph(){return ph;},get pks(){return pks;},get px(){return px;},get pz(){return pz;},setTrack,locate};
+window.__g={get AU(){return AU;},get music(){return music;},net,netCreate,netJoin,get resIdle(){return resIdle;},set resIdle(v){resIdle=v;},win,winStart,winSkip,finish,step,draw,P,A,inp,startRace,get state(){return state;},get t(){return tRace;},get now(){return tNow;},toggleNitro,setCars(a,b){pick=CARS.findIndex(c=>c.k===a);if(b)rivalPick=CARS.findIndex(c=>c.k===b);else if(rivalPick===pick)rivalPick=(pick+1)%CARS.length;useCars();},get models(){return Object.keys(models);},scene,camera,carP,carA,cine,SHOTS,cineStart,get ts(){return timeScale;},get tCount(){return tCount;},get N(){return N;},get NL(){return NL;},get FINISH(){return FINISH;},get ph(){return ph;},get pks(){return pks;},get px(){return px;},get pz(){return pz;},setTrack,locate};
 requestAnimationFrame(frame);
 })();
 </script>

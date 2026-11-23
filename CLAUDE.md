@@ -89,8 +89,9 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 
 ### Cinematic mode (Parth's idea, from 19 reference frames)
 - Goal: during a race the view cuts to film-style angles with slow motion, then returns to the normal game camera on straights and quiet parts. The player keeps control, with the illusion of driving through the shot.
-- For now it runs **only on Neon City** (menu toggle "Cinematic shots", default on). If Parth is happy with it, it gets rolled out to the garage tracks later (their ceilings and pillars will need camera checks).
+- The in-race and finish shots run **only on Neon City** (`cineActive()`). The opening runs on **every track** (`cineOpen()`), menu toggle "Cinematic shots", default on.
 - **Opening (about 7.6 s, hold Drift to skip):** front three-quarter close-up of your car, front wheel close-up, rival rear three-quarter, rival front low, top-down of both cars on the line (3), front wide of both (2), low from behind (1 and GO, with launch smoke), then a nitro view (close on the exhaust with flames, pulling back and up) that eases into the game camera. Parth rejected the earlier low side tracking shot here because the jump from side view to rear view was not smooth.
+- **Garage opening (Spiral and Switchback, Parth 23 Nov):** the same first four shots, then one shot per number: front wide on 3, low from behind on 2, and on 1 the camera glides (1 s blend) from that low shot into the usual wide start camera, which eases in behind the car after GO as before. No top-down (the garage ceiling is too low, and Parth cut it), no nitro view, no launch smoke.
 - **During the race:** a drift in a corner of 90 degrees or more triggers one of: low rear-wheel close-up, high aerial, low front shot the cars drive towards, front three-quarter close-up. A boost triggers an exhaust flame close-up. Running side by side with the rival on a straight triggers a high long-lens (near orthographic) view or the side tracking shot. At least 3.2 s between shots, and side-by-side shots at most every 16 s.
 - **Finish:** slow-motion low shot at the line, then an orbit around the car, then the results.
 - **How it works in code:** `SHOTS` is the shot library (`dur`, `ts` time scale, `fov`, `dof`, `focus`, `cam(u)`), and `cineUpdate()` is the director. `step(dt)` separates real time from game time (`gdt = dt * timeScale`), so slow motion slows the rival and the race clock too and the race stays fair. While a shot is on screen a steering assist (70%) keeps the car on the road. Shots use depth of field (needs WebGL2), letterbox bars, and hide the HUD. The blur buffer is reset on every cut.
@@ -189,6 +190,8 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 
 28. Wheels no longer sink into the road during the rooftop burnout and donut: the car stays flat through both winner sequences instead of leaning. Confirmed by Parth on 19 Nov.
 
+29. Opening cinematic added to Spiral and Switchback: four close shots, then front wide on 3, low behind on 2, a glide into the usual start camera on 1, then GO. Confirmed by Parth on 23 Nov.
+
 ## 4. To do
 
 ### Check on Parth's iPhone (not yet confirmed)
@@ -226,7 +229,7 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 
 ### Cinematic follow-ups
 - [ ] Parth's feedback on each shot against his reference frames
-- [ ] Roll cinematic mode out to Spiral and Switchback once approved
+- [ ] In-race and finish shots on Spiral and Switchback (opening done; ceilings and pillars need camera checks)
 - [ ] The starter character on the line (postponed; needs a model from Parth or Mixamo)
 
 ### Track ideas
