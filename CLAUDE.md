@@ -132,7 +132,7 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 ### Sound
 - No engine, beeps or wind (Parth found them annoying). The only game sound is a tyre screech built from Parth's reference mp3, embedded and looped while a car is sliding. The rival's screech fades with distance.
 - **Nitro sound:** Parth's freesound "nitro activation" clip, trimmed to 2.36 s (the hit plus the whoosh, faded at the end), mono 24 kHz 56 kbps, embedded as base64 in `NITRO_SND`. It starts when the nitro lights up and is faded out in 0.16 s if the nitro is switched off or runs dry (`nitroSound`, watched once per frame in `draw`). It goes through the audio master, so the Sound button silences it. The rival's boost makes no sound.
-- **Two buttons during a race, down the top right corner:** "Sound on/off" switches the tyre screech (the audio master gain), "Music on/off" silences the song without unloading it, and "Pause" below them. Both choices are kept in `localStorage` (`rd_sfx`, `rd_mus`) so they survive a reload. The Music button only appears when a song is loaded, so it is never a dead control. All three are the same width (`min-width:108px`) with 10 px gaps, and the race timer moved to `top:134px` to stay clear of them.
+- **Two buttons during a race, down the top right corner:** "Sound on/off" switches the tyre screech (the audio master gain), "Music on/off" silences the song without unloading it, and "Pause" below them. Both choices are kept in `localStorage` (`rd_sfx`, `rd_mus`) so they survive a reload. The Music button only appears when a song is loaded, so it is never a dead control. All three are the same width (`min-width:108px`) with 10 px gaps, and the race timer moved to `top:134px` to stay clear of them. **While paused**, Sound and Music sit above the pause sheet (`body.paused` raises them, after the `body.cine` rule so it wins) and stay usable; Pause itself stays under it.
 - **Music:** the Tokyo Drift song is not embedded, because hosting a commercial recording isn't allowed. Instead the player picks a song from their own device ("Choose a song from this device"). It is saved in the browser (IndexedDB) and loops during races. The file picker lists audio types explicitly so iPhone opens Files rather than Photos.
 
 ### Multiplayer (built; two players per room)
@@ -191,6 +191,8 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 28. Wheels no longer sink into the road during the rooftop burnout and donut: the car stays flat through both winner sequences instead of leaning. Confirmed by Parth on 19 Nov.
 
 29. Opening cinematic added to Spiral and Switchback: four close shots, then front wide on 3, low behind on 2, a glide into the usual start camera on 1, then GO. Confirmed by Parth on 23 Nov.
+
+30. Sound and Music buttons now work while the game is paused (the pause screen used to cover them). They also stay visible if you pause during the opening shots, and switching Music on while paused waits for Resume. Confirmed by Parth on 23 Nov.
 
 ## 4. To do
 

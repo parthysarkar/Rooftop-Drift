@@ -111,6 +111,7 @@ a.opt{text-decoration:none;display:inline-block}
 body.cine #lbT,body.cine #lbB{height:9vh}
 .hud{transition:opacity .2s}
 body.cine .hud:not(#big),body.cine #mute,body.cine #musBtn,body.cine #pauseBtn{opacity:0!important}
+body.paused #mute,body.paused #musBtn{z-index:5;opacity:1!important}   /* Sound and Music stay usable on top of the pause screen (Parth, 23 Nov) */
 body.cine .ctl{opacity:.3}
 #skip{position:fixed;left:0;right:0;bottom:calc(9vh + 10px);text-align:center;font:700 13px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--paper);opacity:0;pointer-events:none;transition:opacity .3s}
 body.cine.pre #skip{opacity:.7}
@@ -730,7 +731,7 @@ function beep(){}
 function audioUpd(level,rate){if(!AU)return;const t=AC.currentTime;AU.g.gain.setTargetAtTime(level,t,.07);if(AU.src)AU.src.playbackRate.setTargetAtTime(rate,t,.12);}
 $('mute').addEventListener('click',()=>{sfxOff=!sfxOff;if(AU)AU.master.gain.value=sfxOff?0:.8;soundUI();soundSave();});          // tyre screech only
 $('musBtn').addEventListener('click',()=>{musOff=!musOff;                                                                       // the song stays loaded, it is only silenced
-  if(music){music.muted=musOff;if(!musOff&&(state==='race'||state==='count'))music.play().catch(()=>{});}soundUI();soundSave();});
+  if(music){music.muted=musOff;if(!musOff&&!paused&&(state==='race'||state==='count'))music.play().catch(()=>{});}soundUI();soundSave();});
 soundUI();
 
 /* ---------------- input ---------------- */
@@ -794,7 +795,7 @@ function finish(){state='done';tDone=0;won=!A.fin;if(won&&(!best||tRace<best)){b
   big(won?'WIN':'2ND');beep(won?880:220,.5,.14,'sawtooth');if(cineActive())cineStart('finishSide');win.pending=won&&!net.on;}
 function showResult(){$('resTitle').innerHTML=won?'You <em>win</em>':(net.on?'Friend':'Rival')+' <em>wins</em>';$('resTime').textContent=fmt(tRace);$('resDrift').textContent=Math.round(P.score);
   $('resBest').textContent=best?fmt(best):'-';$('result').hidden=false;resIdle=0;hud(false);cineReset();}
-function setPause(v){if(v&&net.on)return;if(v&&state!=='race'&&state!=='count')return;if(v===paused)return;paused=v;$('pause').hidden=!v;
+function setPause(v){if(v&&net.on)return;if(v&&state!=='race'&&state!=='count')return;if(v===paused)return;paused=v;$('pause').hidden=!v;document.body.classList.toggle('paused',v);
   if(music){if(v)music.pause();else music.play().catch(()=>{});}if(AU)AU.g.gain.setTargetAtTime(0,AC.currentTime,.03);}
 $('pauseBtn').addEventListener('click',()=>setPause(true));$('resume').addEventListener('click',()=>setPause(false));
 $('quit').addEventListener('click',()=>{setPause(false);$('toMenu').click();});
