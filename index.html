@@ -618,11 +618,11 @@ function makeCar(o){
   const haloS=new T.SpriteMaterial({map:softTex,color:0xffe9c0,transparent:true,opacity:.22,blending:T.AdditiveBlending,depthWrite:false,fog:false});
   const tailS=new T.SpriteMaterial({map:softTex,color:0xff2030,transparent:true,opacity:.4,blending:T.AdditiveBlending,depthWrite:false,fog:false});
   const tailC=new T.SpriteMaterial({map:softTex,color:0xff4a58,transparent:true,opacity:.95,depthWrite:false,fog:false});
-  const lampH=[],lampT=[];for(let k=0;k<2;k++){const a=new T.Sprite(headS);a.scale.set(.24,.24,1);const c2=new T.Sprite(headS);c2.scale.set(.17,.17,1);const h2=new T.Sprite(haloS);h2.scale.set(.6,.5,1);
+  const lampH=[],lampT=[];for(let k=0;k<2;k++){const hS=headS.clone(),hl=haloS.clone();const a=new T.Sprite(hS);a.scale.set(.24,.24,1);const c2=new T.Sprite(hS);c2.scale.set(.17,.17,1);const h2=new T.Sprite(hl);h2.scale.set(.6,.5,1);
     g.add(a);g.add(c2);g.add(h2);lampH.push([a,c2,h2]);const b=new T.Sprite(tailS);b.scale.set(.7,.5,1);g.add(b);const bc=new T.Sprite(tailC);bc.scale.set(.3,.2,1);g.add(bc);lampT.push([b,bc]);}
   const spot=new T.SpotLight(0xfff0d2,.7,30,.5,.7,1.1);g.add(spot);g.add(spot.target);
   lampH.forEach(L=>L.forEach(x=>x.renderOrder=3));lampT.forEach(L=>L.forEach(x=>x.renderOrder=3));
-  const setLamps=(hd,tl)=>{lampH.forEach((L,k)=>{const sg=k?1:-1;L[0].position.set(hd[0]+.06,hd[1],hd[2]*sg);L[1].position.set(hd[0]+.08,hd[1]-.01,(hd[2]-.15)*sg);L[2].position.set(hd[0]+.08,hd[1],(hd[2]-.06)*sg);
+  const setLamps=(hd,tl)=>{lampH.forEach((L,k)=>{const sg=k?1:-1;L[0].position.set(hd[0]+.02,hd[1],hd[2]*sg);L[1].position.set(hd[0]+.03,hd[1]-.01,(hd[2]-.15)*sg);L[2].position.set(hd[0]+.03,hd[1],(hd[2]-.06)*sg);
       });
     lampT.forEach((L,k)=>{L[0].position.set(tl[0]-.07,tl[1],tl[2]*(k?1:-1));L[1].position.set(tl[0]-.06,tl[1],tl[2]*(k?1:-1));});
     beamI.x0=hd[0]+.1;spot.position.set(Math.max(2.65,hd[0]+.5),.55,0);spot.target.position.set(15,.1,0);};
@@ -638,6 +638,11 @@ function makeCar(o){
   g.rotation.order='YZX';scene.add(g);
   const DEF_REAR=[[-1.3,-.9],[-1.3,.9]];const mirror=new T.Group();mirror.rotation.order='YZX';mirror.scale.y=-1;mirror.visible=false;scene.add(mirror);
   const car={g,mirror,bodyM,tailM,setFlame,tailS,wheels,model:null,rear:DEF_REAR,beamM:beam.material,beam:beamI,streakM,spot};
+  // a headlight's glare points forward: full from the front, fading out as the camera swings round to the side, so from the side you see the lamp itself and not a blob of light hanging off the nose (Parth, 23 Nov)
+  const lampF=new T.Vector3(),lampV=new T.Vector3();
+  car.lampView=cam=>{lampF.set(1,0,0).applyQuaternion(g.quaternion);g.updateMatrixWorld();
+    lampH.forEach(L=>{L[0].getWorldPosition(lampV);lampV.subVectors(cam,lampV).normalize();const k=T.MathUtils.smoothstep(lampF.dot(lampV),.15,.8);   // measured from each lamp, so a close side shot fades the near lamp
+      L[0].material.opacity=k;L[2].material.opacity=.22*k;L[0].scale.setScalar(.24*(.6+.4*k));L[1].scale.setScalar(.17*(.6+.4*k));});};
   car.setModel=m=>{if(car.model===m)return;if(car.model)g.remove(car.model.root);while(mirror.children.length)mirror.remove(mirror.children[0]);if(m&&m.mroot)mirror.add(m.mroot);car.model=m||null;if(m){g.add(m.root);body.visible=false;car.wheels=m.wheels;const r=m.wheels.filter(w=>!w.front).map(w=>[w.piv.position.x,w.piv.position.z]).sort((a,b)=>a[1]-b[1]);car.rear=r.length===2?r:DEF_REAR;if(m.lamps){setLamps(m.lamps.head,m.lamps.tail);setExhaust(m.lamps.ex||DEF_EX);}}else{body.visible=true;car.wheels=wheels;car.rear=DEF_REAR;setLamps([2.2,.62,.6],[-2.22,.72,.58]);setExhaust(DEF_EX);}};
   return car;
 }
@@ -1524,6 +1529,7 @@ function updCamera(dt){
     cPos.x+=Math.sin(t*1.7)*.012;cPos.y+=Math.sin(t*2.3+1)*.01;                 // faint hand-held drift
     if(w>=1){camera.up.copy(cUp);camera.position.copy(cPos);camera.fov=f;camera.lookAt(cLook);}
     else{camera.position.lerp(cPos,w);look.lerp(cLook,w);camera.fov=lerp(camera.fov,f,w);camera.lookAt(look);}}
+  if(window.__camHook)window.__camHook(camera);   // headless tests only
   camera.updateProjectionMatrix();
   return k;
 }
@@ -1563,6 +1569,7 @@ function draw(dt){
     camera.getWorldDirection(cM);const dep=(cF.x-camera.position.x)*cM.x+(cF.y-camera.position.y)*cM.y+(cF.z-camera.position.z)*cM.z;
     fu.tDepth.value=rtS.depthTexture;fu.uDof.value=sh.dof*cw;fu.uFocus.value=Math.max(.8,dep);fu.uRange.value=rng;
     fu.uNear.value=camera.near;fu.uFar.value=camera.far;fu.uAsp.value=camera.aspect;}else fu.uDof.value=0;finMat.uniforms.uBoost.value=bo;finMat.uniforms.uHit.value=P.hit;
+  carP.lampView(camera.position);carA.lampView(camera.position);
   renderer.setRenderTarget(rtS);renderer.render(scene,camera);
   quad.material=accMat;accMat.uniforms.tNew.value=rtS.texture;accMat.uniforms.tOld.value=rtA.texture;renderer.setRenderTarget(rtB);renderer.render(quadScene,quadCam);
   quad.material=finMat;finMat.uniforms.tMap.value=rtB.texture;renderer.setRenderTarget(null);renderer.render(quadScene,quadCam);
@@ -1590,7 +1597,7 @@ function frame(now){requestAnimationFrame(frame);const raw=(now-prev)/1000;prev=
   frames++;if(raw>.03)slow++;if(frames>=120){if(slow>70&&DPR>1){DPR=Math.max(1,DPR-.5);resize();}frames=0;slow=0;}
 }
 resetCars();
-window.__g={get AU(){return AU;},get music(){return music;},net,netCreate,netJoin,get resIdle(){return resIdle;},set resIdle(v){resIdle=v;},win,winStart,winSkip,finish,step,draw,P,A,inp,startRace,get state(){return state;},get t(){return tRace;},get now(){return tNow;},toggleNitro,setCars(a,b){pick=CARS.findIndex(c=>c.k===a);if(b)rivalPick=CARS.findIndex(c=>c.k===b);else if(rivalPick===pick)rivalPick=(pick+1)%CARS.length;useCars();},get models(){return Object.keys(models);},scene,camera,carP,carA,cine,SHOTS,cineStart,get ts(){return timeScale;},get tCount(){return tCount;},get N(){return N;},get NL(){return NL;},get FINISH(){return FINISH;},get ph(){return ph;},get pks(){return pks;},get px(){return px;},get pz(){return pz;},setTrack,locate};
+window.__g={carHead(){return CARS[pick].head;},get AU(){return AU;},get music(){return music;},net,netCreate,netJoin,get resIdle(){return resIdle;},set resIdle(v){resIdle=v;},win,winStart,winSkip,finish,step,draw,P,A,inp,startRace,get state(){return state;},get t(){return tRace;},get now(){return tNow;},toggleNitro,setCars(a,b){pick=CARS.findIndex(c=>c.k===a);if(b)rivalPick=CARS.findIndex(c=>c.k===b);else if(rivalPick===pick)rivalPick=(pick+1)%CARS.length;useCars();},get models(){return Object.keys(models);},scene,camera,carP,carA,cine,SHOTS,cineStart,get ts(){return timeScale;},get tCount(){return tCount;},get N(){return N;},get NL(){return NL;},get FINISH(){return FINISH;},get ph(){return ph;},get pks(){return pks;},get px(){return px;},get pz(){return pz;},setTrack,locate};
 requestAnimationFrame(frame);
 })();
 </script>
