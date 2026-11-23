@@ -121,6 +121,7 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 - **No zoom on touch screens:** iOS zooms on a double tap even with `user-scalable=no`, which left the game stuck zoomed in when Parth tapped the Nitro button twice. The game surfaces (canvas, `.ctl`, `.btn`, `.hud`) are `touch-action:none`, the HUD and menu buttons are `touch-action:manipulation`, a `touchend` guard swallows a second tap within 400 ms anywhere except the menus and the Sound/Music/Pause buttons (so their clicks still fire), and `dblclick` and the Safari `gesture*` (pinch) events are blocked.
 - Gas is automatic. The left pad steers, hold Drift to slide, and Brake slows the car.
 - **Nitro (player-controlled):** drifting fills a nitro tank (3 seconds when full, 1 second at the start). W on the keyboard, or the Nitro button on touch screens, switches it on; pressing again switches it off; it stops by itself when empty. A meter under the speed shows the level. A hard wall hit costs half a second of nitro. The rival's boost stays automatic.
+- **Finish line (Parth, 23 Nov):** after crossing, the car keeps whatever angle it had. In `updPlayer`, `state==='done'` freezes the heading and `P.st` (front wheels), keeps the handbrake on if drifting (`hb=P.dr`), and brakes at 11 m/s² while drifting (32 otherwise), so the slide carries on. Do not reintroduce steering it straight.
 - Keyboard: arrows or A/D to steer, W for nitro, Space to drift, S or Down to brake, Esc to pause or resume, R to restart.
 - Start: both cars line up side by side, and a wide start camera (pulled back further on phones) shows both. After GO, the rival launches harder and the camera eases in behind the player over about 2.6 seconds. The rival holds its lane for the first 2.5 seconds, and cars cannot collide before GO.
 - Three rival difficulties: Easy, Normal and Hard.
@@ -193,6 +194,8 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 29. Opening cinematic added to Spiral and Switchback: four close shots, then front wide on 3, low behind on 2, a glide into the usual start camera on 1, then GO. Confirmed by Parth on 23 Nov.
 
 30. Sound and Music buttons now work while the game is paused (the pause screen used to cover them). They also stay visible if you pause during the opening shots, and switching Music on while paused waits for Resume. Confirmed by Parth on 23 Nov.
+
+31. Over the finish line the car now holds the angle it crossed at: no steering back straight, front wheels keep their angle, and a drift keeps sliding and slows gently instead of braking to a dead stop. Confirmed by Parth on 23 Nov.
 
 ## 4. To do
 

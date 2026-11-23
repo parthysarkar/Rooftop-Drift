@@ -1365,12 +1365,12 @@ if(navigator.share)$('mpShare').addEventListener('click',()=>{navigator.share({t
 function updPlayer(dt){
   let st=inp.steer,hb=inp.drift,br=inp.brake,gas=!br;
   if(cine.assist>0&&state==='race'){const q=Math.min(N-12,P.idx);st=lerp(st,clamp(2.5*angd(ph[q+9],P.h)-.1*P.d,-1,1),cine.assist);}   // steady hands while a cinematic angle hides the road
-  if(state==='done'){const e=angd(P.th,P.h);st=clamp(e*2.2-P.d*.12,-1,1);hb=false;br=true;gas=false;}
+  if(state==='done'){st=P.st;hb=P.dr;br=true;gas=false;}   // over the line the car keeps the angle it crossed at: the body and the front wheels freeze where they were, and a drift carries on sliding to a stop (Parth, 23 Nov)
   else if(state!=='race'){st=0;hb=false;br=false;gas=false;}
   P.st+=(st-P.st)*Math.min(1,dt*9);
   let ch=Math.cos(P.h),sh=Math.sin(P.h),vf=P.vx*ch+P.vz*sh;
   const sp0=Math.hypot(P.vx,P.vz);
-  P.h+=P.st*(P.dr?2.55:2.0)*Math.min(1,sp0/7)*(1-.3*clamp((sp0-22)/22,0,1))*dt*(vf<-.5?-1:1);
+  if(state!=='done')P.h+=P.st*(P.dr?2.55:2.0)*Math.min(1,sp0/7)*(1-.3*clamp((sp0-22)/22,0,1))*dt*(vf<-.5?-1:1);
   ch=Math.cos(P.h);sh=Math.sin(P.h);vf=P.vx*ch+P.vz*sh;let vr=-P.vx*sh+P.vz*ch;
   const slip=Math.atan2(vr,Math.abs(vf)+.5),as=Math.abs(slip);P.slip=slip;
   if(!P.dr&&sp0>9&&(hb||as>.32))P.dr=true;
@@ -1381,7 +1381,7 @@ function updPlayer(dt){
   P.boost=bo?1:0;
   const maxV=bo?47:38,acc=bo?30:17;
   if(gas){vf+=acc*Math.max(0,1-vf/maxV)*dt;if(vf>maxV)vf-=(vf-maxV)*1.6*dt;}
-  if(br){if(vf>.5)vf=Math.max(0,vf-32*dt);else if(state==='race')vf=Math.max(-7,vf-9*dt);}
+  if(br){if(vf>.5)vf=Math.max(0,vf-(state==='done'&&hb?11:32)*dt);else if(state==='race')vf=Math.max(-7,vf-9*dt);}
   if(hb)vf-=vf*.22*dt;
   if(!gas&&!br)vf-=vf*.8*dt;
   vr*=Math.exp(-(hb?1.7:(P.dr?3.4:9.5))*dt);
