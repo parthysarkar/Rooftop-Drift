@@ -383,6 +383,7 @@ const arrowMat=new T.ShaderMaterial({uniforms:{uT:{value:0}},transparent:true,de
 const boardMat=new T.MeshBasicMaterial({color:0x04070b,side:T.DoubleSide});
 const spillTex=ctex(64,8,(c)=>{const g=c.createLinearGradient(0,0,64,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,1)');c.fillStyle=g;c.fillRect(0,0,64,8);});
 const spillMat=new T.MeshBasicMaterial({map:spillTex,color:0x1f6dff,transparent:true,opacity:.3,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide,fog:false,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1});
+const spillFadeMat=spillMat.clone();spillFadeMat.vertexColors=true;   // additive, so a darker vertex colour fades the spill out
 const finTex=ctex(512,96,(c)=>{for(let x=0;x<32;x++)for(let yy=0;yy<6;yy++){c.fillStyle=(x+yy)%2?'#f2fff9':'#0b1114';c.fillRect(x*16,yy*16,16,16);}
     c.fillStyle='#0b1114';c.fillRect(126,14,260,68);c.fillStyle='#8ff2d2';c.font='italic 800 62px "Barlow Condensed","Arial Narrow",Arial,sans-serif';
     c.textAlign='center';c.textBaseline='middle';c.fillText('FINISH',256,50);});
@@ -416,21 +417,34 @@ function dressGarage(){
   inst(new T.BoxGeometry(0.5,0.56,W),beamM,beam);
   inst(new T.BoxGeometry(0.16,4.4,0.16),poleM,lamp);
   inst(new T.BoxGeometry(0.5,0.14,1.6),roofLampM,lamp.map(l=>({i:l.i,d:l.d+0.7,y:4.4})));
-  // crowd on the outer walkway
-  for(let i=0;i<N-30;i+=44)sweep([[-HALF_W-1.5,0],[-HALF_W-1.5,1.85]],i,Math.min(N-1,i+30),crowdMat,{swap:1,rep:10});
-  for(let i=22;i<N-30;i+=44)sweep([[-HALF_W-2.3,0],[-HALF_W-2.3,1.9]],i,Math.min(N-1,i+16),crowdMat,{swap:1,rep:9});
+  // (the crowd on the outer walkway was removed on 23 Nov: Parth felt it didn't add to the scene; chevrons fill its place, see below)
   // floor decals: floor name, a direction arrow on each longer straight, start and finish lines
   for(let Lp=0;Lp<LOOPS;Lp++){decal(Lp*NL+(Lp?22:29),3.4,4.6,label(names[Lp]),0,.9);let alt=-1;
     SEGS.forEach((sg,k)=>{if(k===0||sg[0]!=='s'||sg[1]<20)return;const i=Lp*NL+segStart[k]+Math.min(12,Math.round(sg[1]*.4));alt=-alt;
       if(Math.abs(i-FINISH)>6)decal(i,2.2,1.6,arrowTex,alt*2.5,.75);});}
   decal(17,0.8,HALF_W-0.3,checkTex,0,1);
   decal(FINISH,1.2,HALF_W-0.3,checkTex,0,1);
+  const spillRuns=[];   // [side,i0,i1] of every chevron run; the blue spill on the floor is drawn once from these, below
   // neon chevron boards on the outside wall of every turn, with a lead-in before hairpins and at the first bend of a chicane
   for(let Lp=0;Lp<LOOPS;Lp++)SEGS.forEach((sg,k)=>{if(sg[0]!=='a')return;const big=sg[2]>=90,first=SEGS[k-1][0]==='s';
     const i0=Math.max(2,Lp*NL+segStart[k]-(big?24:(first?16:0))),i1=Math.min(N-2,Lp*NL+(k+1<SEGS.length?segStart[k+1]:NL)-(big?6:0));
     if(i1-i0<6)return;const side=-sg[3],d=side*(HALF_W+.28);
     sweep([[d,1.15],[d,2.75]],i0,i1,arrowMat,{rep:2.3});sweep([[d+side*.04,1.05],[d+side*.04,2.85]],i0,i1,boardMat);
-    sweep([[side*(HALF_W-3.2),.014],[side*(HALF_W-.1),.014]],i0,i1,spillMat);});
+    spillRuns.push([side,i0,i1]);});
+  // where the crowd stood (every 44 m, 38 m long): chevron runs on the outer wall edge, matching the corner runs, and cut only where a corner run already covers the wall (Parth, 23 Nov)
+  {const used=[];for(let Lp=0;Lp<LOOPS;Lp++)SEGS.forEach((sg,k)=>{if(sg[0]!=='a'||sg[3]<0)return;const big=sg[2]>=90,first=SEGS[k-1][0]==='s';
+      const i0=Math.max(2,Lp*NL+segStart[k]-(big?24:(first?16:0))),i1=Math.min(N-2,Lp*NL+(k+1<SEGS.length?segStart[k+1]:NL)-(big?6:0));if(i1-i0>=6)used.push([i0,i1]);});
+    const d=-(HALF_W+.28),run=(a,b)=>{if(b-a<4)return;sweep([[d,1.15],[d,2.75]],a,b,arrowMat,{rep:2.3});sweep([[d-.04,1.05],[d-.04,2.85]],a,b,boardMat);spillRuns.push([-1,a,b]);};
+    for(let i=2;i<N-30;i+=44){let pieces=[[i,Math.min(N-2,i+38)]];
+      for(const u of used)pieces=pieces.flatMap(([a,b])=>b<=u[0]||a>=u[1]?[[a,b]]:[[a,u[0]],[u[1],b]].filter(([x,y])=>y>x));
+      pieces.forEach(([a,b])=>run(a,b));}}
+  // the blue spill under the chevrons: one strip per side over all the runs, so neighbouring runs join without seams or overlaps, and it fades out over 5 m where the runs stop instead of ending in a hard square (Parth, 23 Nov)
+  for(const side of[-1,1]){const f=new Float32Array(N),FD=5;
+    for(const [sd,a,b] of spillRuns)if(sd===side)for(let i=Math.max(0,a-FD);i<=Math.min(N-1,b+FD);i++){const e=i<a?a-i:i>b?i-b:0;f[i]=Math.max(f[i],1-e/FD);}
+    for(let i=0;i<N;){if(f[i]<=0){i++;continue;}let j=i;while(j+1<N&&f[j+1]>0)j++;
+      if(j>i){const m=sweep([[side*(HALF_W-3.2),.014],[side*(HALF_W-.1),.014]],i,j,spillFadeMat),col=[];
+        for(let q=i;q<=j;q++)col.push(f[q],f[q],f[q],f[q],f[q],f[q]);m.geometry.setAttribute('color',new T.Float32BufferAttribute(col,3));}
+      i=j+1;}}
   // finish gantry
   {const i=FINISH,f=[Math.cos(ph[i]),Math.sin(ph[i])],n=[-f[1],f[0]],y=py[i];
     const b=HALF_W+0.3,q=[[px[i]-n[0]*b,y+4.3,pz[i]-n[1]*b],[px[i]+n[0]*b,y+4.3,pz[i]+n[1]*b],[px[i]+n[0]*b,y+6.1,pz[i]+n[1]*b],[px[i]-n[0]*b,y+6.1,pz[i]-n[1]*b]];
@@ -812,10 +826,10 @@ let nightMode=true;
 function setDark(v){nightMode=v;const c=v?0x04060d:FOGC;scene.background.setHex(c);scene.fog.color.setHex(c);scene.fog.density=v?.0052:.0042;
   hemi.intensity=v?.2:.95;sun.intensity=v?.1:.75;floorMat.map=v?floorTexDark:floorTex;floorMat.color.setHex(v?0x6c8084:0xffffff);floorMat.needsUpdate=true;
   tubeM.color.setHex(v?0x1c2526:0xe6fff4);glowMesh.visible=!v;roofLampM.color.setHex(v?0x2a2a26:0xfff0c8);hazM.color.setHex(v?0x6a6a6a:0xffffff);crowdMat.color.setHex(v?0x4c525a:0xffffff);
-  decalMats.forEach(m=>m.color.setHex(v?0x76838a:0xffffff));smoke.mat.uniforms.uTint.value=v?.5:1;spillMat.opacity=v?.42:.2;
+  decalMats.forEach(m=>m.color.setHex(v?0x76838a:0xffffff));smoke.mat.uniforms.uTint.value=v?.5:1;spillMat.opacity=spillFadeMat.opacity=v?.42:.2;
   [carP,carA].forEach(c2=>{c2.beamM.opacity=v?.8:.4;c2.streakM.opacity=v?.75:.5;c2.spot.intensity=v?1.8:.7;});
   if(THEME==='city'){const cc=0x151b42;scene.background.setHex(cc);scene.fog.color.setHex(cc);scene.fog.density=.0058;hemi.color.setHex(0x7aa2ff);hemi.groundColor.setHex(0xff4fb4);hemi.intensity=.66;
-    sun.color.setHex(0xbcd0ff);sun.intensity=.3;smoke.mat.uniforms.uTint.value=.88;decalMats.forEach(m=>m.color.setHex(0xd4dcff));spillMat.opacity=.36;
+    sun.color.setHex(0xbcd0ff);sun.intensity=.3;smoke.mat.uniforms.uTint.value=.88;decalMats.forEach(m=>m.color.setHex(0xd4dcff));spillMat.opacity=spillFadeMat.opacity=.36;
     [carP,carA].forEach(c2=>{c2.beamM.opacity=.55;c2.streakM.opacity=.85;c2.spot.intensity=1.2;});}
   else{hemi.color.setHex(0xb8ffe6);hemi.groundColor.setHex(0x0d2630);sun.color.setHex(0xfff2e0);}
   document.querySelectorAll('#lightsRow .opt').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.v==='off')===v)));}
