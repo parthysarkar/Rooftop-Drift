@@ -201,6 +201,11 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 
 33. Crowd removed from Spiral and Switchback. Chevron runs now stand on the outer wall edge along every stretch the crowd used to fill, joining the corner runs without gaps, and the blue glow on the floor under the chevrons is one continuous strip per side that fades out softly where the runs stop. Confirmed by Parth on 23 Nov.
 
+### Beta (Parth, 23 Nov)
+- A test copy lives in `beta/` and is served at https://parthysarkar.github.io/Rooftop-Drift/beta/ so Parth can try changes on a real browser (and later, rooms) without touching the live game at the root. `beta/index.html` is the working copy with car scripts loaded from `../cars/`, a "(beta)" title and `noindex`. Light car models `cars/<key>_lo.js` sit in `cars/`; the live game doesn't load them.
+- Shares the origin with the live game, so saved settings and best times are shared between the two.
+- Now in beta: four cars on the line (menu Rivals: 3). Notes in `/home/claude/drift/NOTES-4car.md`; it moves into this file if it ships to the live game.
+
 ## 4. To do
 
 ### Check on Parth's iPhone (not yet confirmed)
