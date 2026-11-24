@@ -158,8 +158,8 @@ body.cine.pre #skip{opacity:.7}
       <button class="opt" type="button" data-d="1.04" aria-pressed="false">Hard</button>
     </div>
     <div class="row" id="lightsRow"><span class="lab">Garage lights</span>
-      <button class="opt" type="button" data-v="off" aria-pressed="true">Off, night run</button>
-      <button class="opt" type="button" data-v="on" aria-pressed="false">On</button>
+      <button class="opt" type="button" data-v="on" aria-pressed="true">On</button>
+      <button class="opt" type="button" data-v="off" aria-pressed="false">Off, night run</button>
     </div>
     <div class="row" id="rivRow"><span class="lab">Rivals</span>
       <button class="opt" type="button" data-n="1" aria-pressed="true">1</button>
@@ -840,8 +840,8 @@ $('nextTrack').addEventListener('click',()=>{setTrack(trackIx+1);goRace();});
 $('start').addEventListener('click',goRace);$('again').addEventListener('click',goRace);
 $('toMenu').addEventListener('click',()=>{if(music)music.pause();winEnd();cineReset();state='menu';resetCars();$('result').hidden=true;$('menu').hidden=false;hud(false);});
 /* ---------------- lights off / on ---------------- */
-let nightMode=true;
-function setDark(v){nightMode=v;const c=v?0x04060d:FOGC;scene.background.setHex(c);scene.fog.color.setHex(c);scene.fog.density=v?.0052:.0042;
+let nightMode=false;
+function setDark(v){nightMode=v;const city=THEME==='city';$('lightsRow').style.display=city?'none':'';if(city)v=true;const c=v?0x04060d:FOGC;scene.background.setHex(c);scene.fog.color.setHex(c);scene.fog.density=v?.0052:.0042;
   hemi.intensity=v?.2:.95;sun.intensity=v?.1:.75;floorMat.map=v?floorTexDark:floorTex;floorMat.color.setHex(v?0x6c8084:0xffffff);floorMat.needsUpdate=true;
   tubeM.color.setHex(v?0x1c2526:0xe6fff4);glowMesh.visible=!v;roofLampM.color.setHex(v?0x2a2a26:0xfff0c8);hazM.color.setHex(v?0x6a6a6a:0xffffff);crowdMat.color.setHex(v?0x4c525a:0xffffff);
   decalMats.forEach(m=>m.color.setHex(v?0x76838a:0xffffff));smoke.mat.uniforms.uTint.value=v?.5:1;spillMat.opacity=spillFadeMat.opacity=v?.42:.2;
@@ -850,9 +850,9 @@ function setDark(v){nightMode=v;const c=v?0x04060d:FOGC;scene.background.setHex(
     sun.color.setHex(0xbcd0ff);sun.intensity=.3;smoke.mat.uniforms.uTint.value=.88;decalMats.forEach(m=>m.color.setHex(0xd4dcff));spillMat.opacity=spillFadeMat.opacity=.36;
     [carP,carA,...carX].forEach(c2=>{c2.beamM.opacity=.55;c2.streakM.opacity=.85;c2.spot.intensity=1.2;});}
   else{hemi.color.setHex(0xb8ffe6);hemi.groundColor.setHex(0x0d2630);sun.color.setHex(0xfff2e0);}
-  document.querySelectorAll('#lightsRow .opt').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.v==='off')===v)));}
+  document.querySelectorAll('#lightsRow .opt').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.v==='off')===nightMode)));}
 document.querySelectorAll('#lightsRow .opt').forEach(b=>b.addEventListener('click',()=>{setDark(b.dataset.v==='off');netCfg();}));
-setDark(true);
+setDark(false);
 
 /* ---------------- car models (loaded on demand: only the cars in use are in memory) ---------------- */
 // head / tail = [forward, height, half-width] of the lamps; ex = exhaust tips [forward, height, sideways]
