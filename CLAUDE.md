@@ -207,6 +207,7 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 - A test copy lives in `beta/` and is served at https://parthysarkar.github.io/Rooftop-Drift/beta/ so Parth can try changes on a real browser (and later, rooms) without touching the live game at the root. `beta/index.html` is the working copy with car scripts loaded from `../cars/`, a "(beta)" title and `noindex`. Light car models `cars/<key>_lo.js` sit in `cars/`; the live game doesn't load them.
 - Shares the origin with the live game, so saved settings and best times are shared between the two.
 - Now in beta: four cars on the line (menu Rivals: 3). Notes in `/home/claude/drift/NOTES-4car.md`; it moves into this file if it ships to the live game.
+- Now in beta (25 Nov, not yet confirmed): **rooms for up to four players.** Star layout: every guest talks only to the host, who relays each car to the others (`netMsgHost`, `netSend(o,skip)`). Slots: host 0, guests 1 to 3 (`net.conns`, `net.cars`, `net.me`, `net.rem` = the other slots, fixed at race start). Other players map to `A`, then `XA[0]`, `XA[1]` (light models for the extra two). Lanes by slot order: two players use the middle lanes, three or four use all four (`netLane`). A fifth player gets "room is full"; joining mid-race gets "in a race right now". Each player finishes on their own crossing; the host gives out the place (1 + everyone already in with a faster time, `netFin`), with a 2.5 s fallback on the guest. A player who leaves mid-race disappears and the others race on (`X.gone`). Pings and the 7 s watchdog run on a 1 s timer (`netKeep`), not on frames. Peer id prefix changed to `rooftopdrift4-room-` so beta and live rooms can't mix. Test: `/home/claude/t/test50.js` (one browser per player, local PeerServer).
 
 ## 4. To do
 
@@ -247,6 +248,9 @@ Libraries: three.js r128 from cdnjs, plus `GLTFLoader.js` from `cdn.jsdelivr.net
 - [ ] Parth's feedback on each shot against his reference frames
 - [ ] In-race and finish shots on Spiral and Switchback (opening done; ceilings and pillars need camera checks)
 - [ ] The starter character on the line (postponed; needs a model from Parth or Mixamo)
+
+### Parked (Parth, 25 Nov)
+- [ ] Pause in rooms: only the host can pause. Every player sees "Host is pausing the game" with a 3, 2, 1 countdown, then everyone goes to a screen with Resume and Leave room (and a way to change car). Do after 4-player rooms are confirmed.
 
 ### Track ideas
 - [ ] More tracks if Parth wants them (same atmosphere, different layouts)
